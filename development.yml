@@ -1,0 +1,33 @@
+services:
+    bot:
+        build:
+            context: $PWD/bot
+            dockerfile: dockerfile.development
+        user: root
+        restart: always
+        environment:
+            BOT_API_KEY: $BOT_API_KEY
+            DATABASE_URL: $DATABASE_URL
+        depends_on:
+            - postgres
+        volumes:
+            - ./bot:/app
+            - /app/node_modules
+        stdin_open: true
+        tty: true
+
+    postgres:
+        image: postgres
+        restart: always
+        volumes:
+            - $PWD/pgdata:/var/lib/postgresql/data
+        environment:
+            POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+
+    adminer:
+        image: adminer
+        depends_on:
+            - postgres
+        restart: always
+        ports:
+            - 8080:8080

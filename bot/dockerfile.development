@@ -1,0 +1,14 @@
+FROM node:17
+
+WORKDIR /app
+ENV NODE_ENV=development
+
+RUN npm install -g nodemon ts-node
+
+COPY package*.json ./
+RUN npm install
+RUN chmod 777 node_modules/prisma
+COPY . .
+
+USER root
+CMD npx prisma generate && nodemon

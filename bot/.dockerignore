@@ -1,0 +1,6 @@
+node_modules
+npm-debug.log
+pgdata.env
+file.json.dockerignore
+client
+file.json
