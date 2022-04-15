@@ -19,5 +19,96 @@ model User {
   languageCode String   @default("ru") @map("language_code")
   createdAt    DateTime @default(now()) @map("created_at")
 
+  quizzes Quiz[]
+
+  Form Form[]
   @@map("user")
+}
+
+model Quiz {
+  id          String @id @default(cuid())
+  title       String
+  description String
+
+  author   User    @relation(fields: [authorId], references: [id])
+  authorId Int     @map("author_id")
+  actived  Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  questions Question[]
+  Form      Form[]
+
+  @@map("quiz")
+}
+
+model Question {
+  id   String       @id @default(cuid())
+  type QuestionType
+
+  quiz   Quiz   @relation(fields: [quizId], references: [id])
+  quizId String
+
+  order Int
+  text  String
+
+  options Option[]
+
+  Answer Answer[]
+
+  @@map("question")
+}
+
+model Option {
+  id   String @id @default(cuid())
+  text String
+
+  quizQuestionId String   @map("quiz_question_id")
+  quizQuestion   Question @relation(fields: [quizQuestionId], references: [id])
+
+  isRight      Boolean? @map("is_right")
+  rightComment String?
+  wrongComment String?
+
+  Answer Answer[]
+  @@map("option")
+}
+
+model Form {
+  id String @id @default(cuid())
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  quiz   Quiz   @relation(fields: [quizId], references: [id])
+  quizId String
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  Answer    Answer[]
+
+  @@map("form")
+}
+
+model Answer {
+  form   Form   @relation(fields: [formId], references: [id])
+  formId String @map("form_id")
+
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String   @map("question_id")
+
+  option   Option? @relation(fields: [optionId], references: [id])
+  optionId String? @map("option_id")
+
+  text String?
+
+  @@unique([formId, questionId])
+  @@map("answer")
+}
+
+enum QuestionType {
+  Interrogation  @map("interrogation") // Опрос
+  Quiz           @map("quiz") // Викторина
+  Statistic      @map("statistic") // Статистика
 }
