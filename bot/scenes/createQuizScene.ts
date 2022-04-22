@@ -6,6 +6,7 @@ import { PrismaClient } from "../prisma/client";
 import _ from "lodash";
 import { InlineKeyboardButton } from "telegraf/typings/core/types/typegram";
 import { QUIZZES_SCENE } from "./quizzesScene";
+import { EDIT_QUIZ_SCENE } from "./editQuizSceen";
 
 export const CREATE_QUIZ_SCENE = "create_quiz_scene";
 
@@ -14,10 +15,7 @@ const prisma = new PrismaClient();
 const BACK_ACTION = "back";
 
 const step1: MiddlewareFn<MyContext> = async (ctx) => {
-	await ctx.send("Введи название квиза (короткое)", [
-		[{ text: "Назад", callback_data: BACK_ACTION }],
-	]);
-
+	await ctx.send("Название квиза:");
 	return ctx.wizard.next();
 };
 
@@ -25,6 +23,7 @@ const step2: MiddlewareFn<MyContext> = async (ctx) => {
 	const message = ctx.getMessage();
 
 	if (!message) {
+		await ctx.send("Нужно название квиза:");
 		return;
 	}
 
@@ -37,6 +36,7 @@ const step3: MiddlewareFn<MyContext> = async (ctx) => {
 	const message = ctx.getMessage();
 
 	if (!message) {
+		await ctx.send("Нужно небольшое описание квизу:");
 		return;
 	}
 
@@ -50,9 +50,7 @@ const step3: MiddlewareFn<MyContext> = async (ctx) => {
 		},
 	});
 
-	console.log(quiz);
-
-	return ctx.scene.enter(QUIZZES_SCENE);
+	return ctx.scene.enter(EDIT_QUIZ_SCENE, { quizId: quiz.id });
 };
 
 const createQuizScene = new Scenes.WizardScene<MyContext>(

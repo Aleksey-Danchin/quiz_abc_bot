@@ -1,23 +1,26 @@
 import { Markup, Scenes, Telegraf, session, deunionize } from "telegraf";
 import { config } from "dotenv";
 import { writeFile } from "fs/promises";
-import { PrismaClient } from "./prisma/client";
+
 import { MyContext } from "./types";
 import mainScene, { MAIN_SCENE } from "./scenes/mainScene";
-import quizzesScene from "./scenes/quizzesScene";
+import quizzesScene, { QUIZZES_SCENE } from "./scenes/quizzesScene";
 import createQuizScene, { CREATE_QUIZ_SCENE } from "./scenes/createQuizScene";
-
-const prisma = new PrismaClient();
+import editQuizScene from "./scenes/editQuizSceen";
+import prisma from "./prisma";
 
 const stage = new Scenes.Stage<MyContext>([
 	quizzesScene,
 	mainScene,
 	createQuizScene,
+	editQuizScene,
 ]);
 
 config();
 
 const bot = new Telegraf<MyContext>(process.env.BOT_API_KEY as string);
+
+bot.use(session());
 
 bot.use(async (ctx, next) => {
 	const chat = ctx.chat;
@@ -39,6 +42,11 @@ bot.use(async (ctx, next) => {
 				username: chat.username ?? "",
 			},
 		});
+	}
+
+	if (ctx.session?.quizId) {
+		ctx.quizId = ctx.session.quizId;
+		ctx.quiz = await prisma.quiz.findFirst({ where: { id: ctx.quizId } });
 	}
 
 	ctx.send = async (text, keyboard) => {
@@ -89,16 +97,14 @@ bot.use(async (ctx, next) => {
 if (process.env.NODE_ENV === "development") {
 	bot.use(async (ctx, next) => {
 		await writeFile("file.json", JSON.stringify(ctx, null, 2), "utf-8");
-		console.log(ctx.user.username);
 		next();
 	});
 }
 
-bot.use(session());
 bot.use(stage.middleware());
 
-// bot.use((ctx) => ctx.scene.enter(MAIN_SCENE));
-bot.use((ctx) => ctx.scene.enter(CREATE_QUIZ_SCENE));
+bot.use((ctx) => ctx.scene.enter(QUIZZES_SCENE));
+// bot.use((ctx) => ctx.scene.enter(CREATE_QUIZ_SCENE));
 
 bot.launch().then(() => {
 	console.log(`Quiz abc bot started! [${process.env.NODE_ENV}]`);

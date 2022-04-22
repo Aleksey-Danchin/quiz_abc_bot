@@ -1,6 +1,6 @@
 import { Context, Scenes } from "telegraf";
 import { InlineKeyboardButton } from "telegraf/typings/core/types/typegram";
-import { User } from "./prisma/client";
+import { Quiz, User } from "./prisma/client";
 
 interface MyWizardSession extends Scenes.WizardSessionData {
 	step: number;
@@ -8,15 +8,28 @@ interface MyWizardSession extends Scenes.WizardSessionData {
 	description: string;
 }
 
-interface MySession extends Scenes.WizardSession<MyWizardSession> {}
+interface MySession extends Scenes.WizardSession<MyWizardSession> {
+	quizId?: string;
+}
+
+interface MySceneContextScene
+	extends Scenes.SceneContextScene<MyContext, MyWizardSession> {
+	state: {
+		quizId?: string;
+		step?: string;
+	};
+}
 
 interface MyContext extends Context {
 	user: User;
+
+	quizId?: string;
+	quiz: Quiz | null;
 
 	send: (text: string, keyboard?: InlineKeyboardButton[][]) => void;
 	getMessage: () => string | undefined;
 
 	session: MySession;
-	scene: Scenes.SceneContextScene<MyContext, MyWizardSession>;
+	scene: MySceneContextScene;
 	wizard: Scenes.WizardContextWizard<MyContext>;
 }
